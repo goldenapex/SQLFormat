@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.format.base.AppException;
+import com.format.base.ConditionPosition;
 import com.format.base.SqlComponent;
+import com.format.util.SqlAnalysUtils;
 import com.format.util.StringUtils;
 
 public class WhereCondition extends SqlComponent {
@@ -38,10 +40,27 @@ public class WhereCondition extends SqlComponent {
 
 	}
 
-	public WhereCondition(String subSelect, String aliasTblName) {
-		if (subSelect == null || aliasTblName == null) {
-			throw new AppException("the table is null!");
+	public WhereCondition(String andOrLogicOperation, String condition) {
+
+		// ====================================================
+		// parameter check
+		// ====================================================
+		if (StringUtils.isEmpty(condition)) {
+			throw new AppException("the condition is null!");
 		}
+
+		// ====================================================
+		// 構文チェック
+		// ====================================================
+		ConditionPosition firstComparisonPos = SqlAnalysUtils.getFirstPositionByComparisonOperation(condition);
+		if (firstComparisonPos == null) {
+			throw new AppException("there is no any comparison on the condition!");
+		}
+
+		String leftCondition = StringUtils.getSubString(condition, 0, firstComparisonPos.getStart(), true);
+		String rightCondition = StringUtils.getSubString(condition, 0, firstComparisonPos.getEnd(), true);
+
+		WhereCondition whereCondition = new WhereCondition(leftCondition, rightCondition, firstComparisonPos.getLogicOperation(), null);
 
 		// ====================================================
 		// 副問い合わせ句

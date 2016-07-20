@@ -9,7 +9,6 @@ import com.format.base.SearchTable;
 import com.format.base.SqlComponent;
 import com.format.common.Key;
 import com.format.sql.Column;
-import com.format.sql.WhereCondition;
 
 public class SqlAnalysUtils {
 
@@ -554,13 +553,8 @@ public class SqlAnalysUtils {
 
 		// 条件式が一つしかない場合、条件式を比較演算子を元に左右式を分ける
 		if (firstAndOrPos == null) {
-			firstComparisonPos = getFirstPositionByComparisonOperation(whereWords);
 
-			String leftCondition = StringUtils.getSubString(whereWords, 0, firstComparisonPos.getStart(), true);
-			String rightCondition = StringUtils.getSubString(whereWords, 0, firstComparisonPos.getEnd(), true);
-
-			WhereCondition whereCondition = new WhereCondition(leftCondition, rightCondition, firstComparisonPos.getLogicOperation(), null);
-			whereConditions.add(whereCondition);
+			whereConditions.add(null, whereCondition);
 			return;
 		}
 		// 条件式が複数ある場合
@@ -668,6 +662,12 @@ public class SqlAnalysUtils {
 		return bRet;
 	}
 
+
+	/**
+	 * whereの条件文にて、論理演算子を区切りとして、最初に現れた絞りの条件式を切り取る。なお、最初の条件式には論理演算子なしとする。
+	 * @param conditionWords
+	 * @return
+	 */
 	public static ConditionPosition getFirstPositionByAndOrOperation(String conditionWords) {
 		ConditionPosition pos = null;
 
@@ -676,9 +676,10 @@ public class SqlAnalysUtils {
 
 		for (AND_OR_OPERATION item : AND_OR_OPERATION.values()) {
 			startIdx = StringUtils.getStartIndexOfKeyByPosition(conditionWords, item.getSearchKey(), 0);
+
 			if (startIdx != -1) {
 
-				// 検索に使われたANDキーがBETWEEN～ANDの一部である場合、スキップする
+				// ANDキーがBETWEEN～AND比較演算子の一部である場合、スキップする
 				if (AND_OR_OPERATION.AND.getSearchKey().equals(item.getSearchKey())
 						&& StringUtils.getFirstPosByKeyRegion(conditionWords, COMPARISION_OPERATION.BETWEEN.getSearchKey(), 0, startIdx) != null) {
 					continue;
